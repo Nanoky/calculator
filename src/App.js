@@ -99,6 +99,79 @@ const buttons = [
   },
 ]
 
+function chooseOpIndex(operators) {
+  let top = 0;
+  
+  for (let index = 0; index < operators.length; index++) {
+    const element = operators[index];
+    top = index;
+    if (element in [labelDivide, labelProduct])
+      break;
+  }
+  return top;
+}
+
+function singleOperation(operand1, operand2, operator) {
+  let result
+  switch (operator) {
+    case labelAdd:
+      result = operand1 + operand2;
+      break;
+
+    case labelMinus:
+      result = operand1 - operand2;
+      break;
+
+    case labelProduct:
+      result = operand1 * operand2;
+      break;
+
+    case labelDivide:
+      result = operand1 / operand2;
+      break;
+
+    case labelPercentage:
+      result = operand1 % operand2;
+      break;
+  
+    default:
+      break;
+  }
+  return result;
+}
+
+function removeFromStack(index, stack) {
+  let newStack = stack.slice();
+
+  newStack.splice(index, 1);
+
+  return newStack;
+}
+
+function addToStack(value, stack) {
+  let newStack = stack.slice();
+
+  newStack.push(value);
+
+  return newStack;
+}
+
+function operate(operands, operators) {
+  let opIndex = chooseOpIndex(operators);
+  let operand1 = operands[opIndex];
+  let operand2 = operands[opIndex + 1];
+
+  let result = singleOperation(operand1, operand2, operators[opIndex]);
+
+  let newNStack = removeFromStack(opIndex + 1, operands);
+  newNStack[opIndex] = result;
+  let newOStack = removeFromStack(opIndex, operators);
+  return {
+    newNStack,
+    newOStack
+  };
+}
+
 class App extends React.Component {
 
   constructor(props) {
@@ -113,82 +186,9 @@ class App extends React.Component {
     }
   }
 
-  chooseOpIndex(operators) {
-    let top = 0;
-    
-    for (let index = 0; index < operators.length; index++) {
-      const element = operators[index];
-      top = index;
-      if (element in [labelDivide, labelProduct])
-        break;
-    }
-    return top;
-  }
-
-  singleOperation(operand1, operand2, operator) {
-    let result
-    switch (operator) {
-      case labelAdd:
-        result = operand1 + operand2;
-        break;
-
-      case labelMinus:
-        result = operand1 - operand2;
-        break;
-
-      case labelProduct:
-        result = operand1 * operand2;
-        break;
-
-      case labelDivide:
-        result = operand1 / operand2;
-        break;
-
-      case labelPercentage:
-        result = operand1 % operand2;
-        break;
-    
-      default:
-        break;
-    }
-    return result;
-  }
-
-  removeFromStack(index, stack) {
-    let newStack = stack.slice();
-
-    newStack.splice(index, 1);
-
-    return newStack;
-  }
-
-  addToStack(value, stack) {
-    let newStack = stack.slice();
-
-    newStack.push(value);
-
-    return newStack;
-  }
-
-  operate(operands, operators) {
-    let opIndex = this.chooseOpIndex(operators);
-    let operand1 = operands[opIndex];
-    let operand2 = operands[opIndex + 1];
-
-    let result = this.singleOperation(operand1, operand2, operators[opIndex]);
-
-    let newNStack = this.removeFromStack(opIndex + 1, operands);
-    newNStack[opIndex] = result;
-    let newOStack = this.removeFromStack(opIndex, operators);
-    return {
-      newNStack,
-      newOStack
-    };
-  }
-
   calculate(operands, operators) {
     while (operators.length > 0) { 
-      let {newNStack, newOStack} = this.operate(operands, operators);
+      let {newNStack, newOStack} = operate(operands, operators);
       operands = newNStack;
       operators = newOStack;
     }
@@ -219,7 +219,7 @@ class App extends React.Component {
         break;
       
       case ButtonType.operator:
-        let operands = this.addToStack(
+        let operands = addToStack(
           (this.state.number) ? 
             parseFloat(this.state.number) : 
             this.state.ansHist.at(this.state.ansHist.length - 1), 
@@ -231,7 +231,7 @@ class App extends React.Component {
         });
 
         if (button.label !== labelEqual) {
-          let operators = this.addToStack(button.label, this.state.opStack);
+          let operators = addToStack(button.label, this.state.opStack);
           this.setState({
             opStack : operators
           });
